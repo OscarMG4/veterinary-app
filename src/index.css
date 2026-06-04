@@ -1,0 +1,188 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #f0f5ff;
+}
+
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Login */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 50%, #1677ff 100%);
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(22, 119, 255, 0.2);
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-logo {
+  font-size: 48px;
+  color: #1677ff;
+}
+
+.login-hint {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 12px;
+}
+
+/* Layout */
+.main-layout {
+  min-height: 100vh;
+}
+
+.main-sider .brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-icon {
+  font-size: 24px;
+  color: #36cfc9;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.collapse-trigger {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+  color: #1677ff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.main-content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  min-height: calc(100vh - 112px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-header-extra {
+  flex-shrink: 0;
+}
+
+/* Dashboard stats */
+.stat-card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.stat-card-primary {
+  background: linear-gradient(135deg, #e6f7ff, #fff);
+  border-left: 4px solid #1677ff;
+}
+
+.stat-card-info {
+  background: linear-gradient(135deg, #e6fffb, #fff);
+  border-left: 4px solid #36cfc9;
+}
+
+.stat-card-warning {
+  background: linear-gradient(135deg, #fff7e6, #fff);
+  border-left: 4px solid #faad14;
+}
+
+.stat-card-success {
+  background: linear-gradient(135deg, #f6ffed, #fff);
+  border-left: 4px solid #52c41a;
+}
+
+/* Sales / Inventory */
+.sale-summary {
+  background: #f0f5ff;
+  margin-top: 16px;
+}
+
+.inventory-adjustments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.export-card {
+  text-align: center;
+  max-width: 480px;
+  padding: 32px;
+}
+
+.export-icon {
+  font-size: 64px;
+  color: #52c41a;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin: 12px;
+    padding: 16px;
+  }
+}
