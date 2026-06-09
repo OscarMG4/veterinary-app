@@ -13,3 +13,8 @@ export interface LowStockStat {
   stock: number
   minStock: number
 }
+
+export interface SalesTrendStat {
+  day: number
+  total: number
+}

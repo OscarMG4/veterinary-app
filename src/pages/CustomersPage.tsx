@@ -98,7 +98,7 @@ export function CustomersPage() {
     <div>
       <PageHeader
         title="Clientes"
-        subtitle="Registro de clientes y mascotas"
+        subtitle="Tutores y responsables de mascotas"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Nuevo cliente

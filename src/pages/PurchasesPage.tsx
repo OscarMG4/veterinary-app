@@ -1,32 +1,34 @@
 import { useState } from 'react'
 import {
   Button,
-  Card,
   Form,
-  InputNumber,
   Select,
-  Space,
   Typography,
   message,
-  Divider,
 } from 'antd'
-import { MinusCircleOutlined, PlusOutlined, ShoppingOutlined } from '@ant-design/icons'
+import { ShoppingOutlined, SearchOutlined } from '@ant-design/icons'
 import { PageHeader } from '../components/PageHeader'
+import {
+  LineItemsEditor,
+  computeLineItemsSubtotal,
+  mapLineItemsForApi,
+  type LineItemFormValues,
+} from '../components/transactions/LineItemsEditor'
 import { purchaseService } from '../services/purchaseService'
 import { supplierService } from '../services/supplierService'
 import { productService } from '../services/productService'
 import type { SupplierResponse } from '../interfaces/supplier'
 import type { ProductResponse } from '../interfaces/product'
 import type { PurchaseRequest } from '../interfaces/purchase'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, roundPrice } from '../utils/format'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { handleApiError } from '../utils/errorHandler'
 
-const { Text } = Typography
+const { Text, Title } = Typography
 
 interface PurchaseFormValues {
   supplierId: number
-  items: { productId: number; quantity: number; price: number }[]
+  items: LineItemFormValues[]
 }
 
 interface PurchaseCatalogData {
@@ -51,26 +53,26 @@ export function PurchasesPage() {
     [],
     { suppliers: [], products: [] },
   )
+
   const suppliers = catalog?.suppliers ?? []
   const products = catalog?.products ?? []
+
   const [submitLoading, setSubmitLoading] = useState(false)
   const [lastPurchase, setLastPurchase] = useState<string | null>(null)
   const [form] = Form.useForm<PurchaseFormValues>()
 
   const items = Form.useWatch('items', form) ?? []
-  const total = items.reduce(
-    (sum, item) => sum + (item?.quantity ?? 0) * (item?.price ?? 0),
-    0,
-  )
+  const total = computeLineItemsSubtotal(items)
 
   const onProductChange = (productId: number, index: number) => {
     const product = products.find((p) => p.id === productId)
     if (product) {
-      const itemsValue = form.getFieldValue('items') ?? []
+      const itemsValue = [...(form.getFieldValue('items') ?? [])]
       itemsValue[index] = {
         ...itemsValue[index],
         productId,
-        price: product.price,
+        price: roundPrice(product.price),
+        quantity: itemsValue[index]?.quantity ?? 1,
       }
       form.setFieldsValue({ items: itemsValue })
     }
@@ -81,7 +83,7 @@ export function PurchasesPage() {
     try {
       const payload: PurchaseRequest = {
         supplierId: values.supplierId,
-        items: values.items,
+        items: mapLineItemsForApi(values.items),
       }
       const { data } = await purchaseService.create(payload)
       message.success(`Compra registrada: ${data.documentNumber}`)
@@ -89,6 +91,9 @@ export function PurchasesPage() {
         `${data.documentNumber} — Total: ${formatCurrency(data.total)}`,
       )
       form.resetFields()
+      form.setFieldsValue({
+        items: [{ quantity: 1, price: 0 }],
+      })
     } catch (error) {
       handleApiError(error)
     } finally {
@@ -100,106 +105,80 @@ export function PurchasesPage() {
     <div>
       <PageHeader
         title="Compras"
-        subtitle="Registrar nueva compra (POST /api/purchases)"
+        subtitle="Registrar compra de insumos y medicamentos veterinarios"
       />
+
       {lastPurchase && (
-        <Card size="small" style={{ marginBottom: 16 }} type="inner">
+        <div className="transaction-success-banner">
           <Text type="success">Última compra: {lastPurchase}</Text>
-        </Card>
+        </div>
       )}
-      <Card>
+
+      <div className="transaction-form">
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={{ items: [{}] }}
+          initialValues={{
+            items: [{ quantity: 1, price: 0 }],
+          }}
         >
-          <Form.Item
-            name="supplierId"
-            label="Proveedor"
-            rules={[{ required: true, message: 'Seleccione un proveedor' }]}
-          >
-            <Select
-              showSearch
-              optionFilterProp="label"
-              placeholder="Seleccionar proveedor"
-              options={suppliers.map((s) => ({
-                value: s.id,
-                label: `${s.businessName} — ${s.documentNumber}`,
-              }))}
+          <section className="transaction-section">
+            <Title level={5} className="transaction-section-title">
+              Proveedor
+            </Title>
+            <Form.Item
+              name="supplierId"
+              rules={[{ required: true, message: 'Seleccione un proveedor' }]}
+              style={{ marginBottom: 0 }}
+            >
+              <Select
+                showSearch
+                placeholder="Buscar por documento o razón social..."
+                suffixIcon={<SearchOutlined />}
+                optionFilterProp="label"
+                options={suppliers.map((s) => ({
+                  value: s.id,
+                  label: `${s.documentNumber} — ${s.businessName}`,
+                }))}
+                className="transaction-select"
+              />
+            </Form.Item>
+          </section>
+
+          <div className="transaction-divider" />
+
+          <section className="transaction-section">
+            <Title level={5} className="transaction-section-title">
+              Productos
+            </Title>
+            <LineItemsEditor
+              form={form}
+              products={products}
+              onProductChange={onProductChange}
             />
-          </Form.Item>
+          </section>
 
-          <Divider>Productos</Divider>
-
-          <Form.List name="items">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...rest }) => (
-                  <Space
-                    key={key}
-                    align="baseline"
-                    style={{ display: 'flex', marginBottom: 12 }}
-                    wrap
-                  >
-                    <Form.Item
-                      {...rest}
-                      name={[name, 'productId']}
-                      rules={[{ required: true }]}
-                    >
-                      <Select
-                        style={{ width: 220 }}
-                        placeholder="Producto"
-                        options={products.map((p) => ({
-                          value: p.id,
-                          label: p.name,
-                        }))}
-                        onChange={(id) => onProductChange(id, name)}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      {...rest}
-                      name={[name, 'quantity']}
-                      rules={[{ required: true }]}
-                    >
-                      <InputNumber min={1} placeholder="Cant." />
-                    </Form.Item>
-                    <Form.Item
-                      {...rest}
-                      name={[name, 'price']}
-                      rules={[{ required: true }]}
-                    >
-                      <InputNumber min={0} placeholder="Precio" />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
-                  Agregar producto
-                </Button>
-              </>
-            )}
-          </Form.List>
-
-          <Card size="small" className="sale-summary" style={{ marginTop: 16 }}>
-            <p>
-              <strong>Total: {formatCurrency(total)}</strong>
-            </p>
-          </Card>
-
-          <Form.Item style={{ marginTop: 16 }}>
+          <div className="transaction-footer">
+            <div className="transaction-totals">
+              <div className="transaction-total-row transaction-total-final">
+                <span>Total</span>
+                <strong>{formatCurrency(total)}</strong>
+              </div>
+            </div>
             <Button
               type="primary"
               htmlType="submit"
               loading={submitLoading}
               icon={<ShoppingOutlined />}
               size="large"
+              className="transaction-submit-btn"
             >
               Registrar compra
             </Button>
-          </Form.Item>
+          </div>
         </Form>
-      </Card>
+      </div>
     </div>
   )
 }

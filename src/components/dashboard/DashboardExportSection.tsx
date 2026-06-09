@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { Button, Card, Typography, message } from 'antd'
 import { DownloadOutlined, FileExcelOutlined } from '@ant-design/icons'
-import { PageHeader } from '../components/PageHeader'
-import { exportService } from '../services/exportService'
-import { handleApiError } from '../utils/errorHandler'
+import { exportService } from '../../services/exportService'
+import { handleApiError } from '../../utils/errorHandler'
 
-const { Paragraph } = Typography
+const { Paragraph, Text } = Typography
 
-export function ExportPage() {
+export function DashboardExportSection() {
   const [loading, setLoading] = useState(false)
 
   const handleDownload = async () => {
@@ -17,7 +16,7 @@ export function ExportPage() {
       const url = window.URL.createObjectURL(new Blob([data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', 'sales.xlsx')
+      link.setAttribute('download', 'ventas.xlsx')
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -31,27 +30,25 @@ export function ExportPage() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Exportar ventas"
-        subtitle="Descarga reporte Excel (GET /api/export/sales)"
-      />
-      <Card className="export-card">
-        <FileExcelOutlined className="export-icon" />
-        <Paragraph>
-          Exporta todas las ventas registradas en formato Excel (.xlsx).
-          Solo disponible para administradores.
-        </Paragraph>
+    <Card className="content-card dashboard-export-card" title="Exportar ventas">
+      <div className="dashboard-export-content">
+        <FileExcelOutlined className="dashboard-export-icon" />
+        <div>
+          <Paragraph style={{ marginBottom: 4 }}>
+            Descarga un reporte Excel con todas las ventas a tutores registradas
+            en la clínica.
+          </Paragraph>
+          <Text type="secondary">Solo disponible para administradores.</Text>
+        </div>
         <Button
           type="primary"
-          size="large"
           icon={<DownloadOutlined />}
           loading={loading}
           onClick={() => void handleDownload()}
         >
           Descargar ventas.xlsx
         </Button>
-      </Card>
-    </div>
+      </div>
+    </Card>
   )
 }

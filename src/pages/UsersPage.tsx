@@ -133,7 +133,7 @@ export function UsersPage() {
             title: 'Rol',
             dataIndex: 'role',
             render: (role: UserRole) => (
-              <Tag color={role === 'ADMIN' ? 'blue' : 'cyan'}>{role}</Tag>
+              <Tag color={role === 'ADMIN' ? 'green' : 'default'}>{role}</Tag>
             ),
           },
           {

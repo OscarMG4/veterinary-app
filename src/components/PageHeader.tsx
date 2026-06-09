@@ -12,15 +12,16 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, extra }: PageHeaderProps) {
   return (
     <div className="page-header">
-      <div>
-        <Title level={3} style={{ margin: 0 }}>
-          {title}
-        </Title>
-        {subtitle && (
-          <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
-            {subtitle}
-          </Paragraph>
-        )}
+      <div className="page-header-main">
+        <div className="page-header-accent" aria-hidden />
+        <div>
+          <Title level={3} className="page-header-title">
+            {title}
+          </Title>
+          {subtitle && (
+            <Paragraph className="page-header-subtitle">{subtitle}</Paragraph>
+          )}
+        </div>
       </div>
       {extra && <div className="page-header-extra">{extra}</div>}
     </div>

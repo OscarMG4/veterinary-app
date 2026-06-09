@@ -16,8 +16,8 @@ export const inventoryService = {
       API_ENDPOINTS.INVENTORY.ADJUSTMENT_NEGATIVE,
       data,
     ),
-  getHistory: (productId: number) =>
-    apiClient.get<InventoryMovementResponse[]>(
-      API_ENDPOINTS.INVENTORY.HISTORY(productId),
-    ),
+  getHistory: (productId?: number) =>
+    apiClient.get<InventoryMovementResponse[]>(API_ENDPOINTS.INVENTORY.HISTORY, {
+      params: productId != null ? { productId } : undefined,
+    }),
 }

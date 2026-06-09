@@ -128,7 +128,7 @@ export function ProductsPage() {
     <div>
       <PageHeader
         title="Productos"
-        subtitle="Catálogo e inventario de productos"
+        subtitle="Medicamentos, insumos y productos para mascotas"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Nuevo producto
@@ -223,7 +223,13 @@ export function ProductsPage() {
           </Form.Item>
           <Space style={{ width: '100%' }} size="large">
             <Form.Item name="price" label="Precio" rules={[{ required: true }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber
+                min={0}
+                precision={2}
+                controls={false}
+                style={{ width: '100%' }}
+                className="line-item-price-input"
+              />
             </Form.Item>
             <Form.Item name="stock" label="Stock" rules={[{ required: true }]}>
               <InputNumber min={0} style={{ width: '100%' }} />

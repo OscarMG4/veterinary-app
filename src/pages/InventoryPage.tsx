@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Button,
   Card,
+  Empty,
   Form,
   Input,
   InputNumber,
@@ -9,8 +10,10 @@ import {
   Table,
   Tabs,
   Tag,
+  Typography,
   message,
 } from 'antd'
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { PageHeader } from '../components/PageHeader'
 import { inventoryService } from '../services/inventoryService'
 import { productService } from '../services/productService'
@@ -24,11 +27,31 @@ import { usePermissions } from '../hooks/usePermissions'
 import { formatDateTime } from '../utils/format'
 import { handleApiError } from '../utils/errorHandler'
 
+const { Text } = Typography
+
 const movementTypeLabels: Record<string, string> = {
   ENTRY: 'Entrada',
   EXIT: 'Salida',
   ADJUSTMENT_POSITIVE: 'Ajuste +',
   ADJUSTMENT_NEGATIVE: 'Ajuste -',
+}
+
+function getMovementLabel(type: string, reason?: string): string {
+  const upperReason = reason?.toUpperCase() ?? ''
+  if (upperReason.includes('VENTA')) return 'Venta'
+  if (upperReason.includes('COMPRA')) return 'Compra'
+  return movementTypeLabels[type] ?? type
+}
+
+function getMovementColor(type: string, reason?: string): string {
+  const label = getMovementLabel(type, reason)
+  if (label === 'Venta' || label === 'Salida' || label === 'Ajuste -') {
+    return 'red'
+  }
+  if (label === 'Compra' || label === 'Entrada' || label === 'Ajuste +') {
+    return 'green'
+  }
+  return 'green'
 }
 
 export function InventoryPage() {
@@ -46,25 +69,32 @@ export function InventoryPage() {
     [],
     [] as ProductResponse[],
   )
+
   const [history, setHistory] = useState<InventoryMovementResponse[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
+  const [filterProductId, setFilterProductId] = useState<number | null>(null)
   const [adjustLoading, setAdjustLoading] = useState(false)
   const [positiveForm] = Form.useForm<InventoryAdjustmentRequest>()
   const [negativeForm] = Form.useForm<InventoryAdjustmentRequest>()
 
-  const loadHistory = async (productId: number) => {
-    setSelectedProductId(productId)
+  const loadHistory = useCallback(async (productId?: number | null) => {
     setHistoryLoading(true)
     try {
-      const { data } = await inventoryService.getHistory(productId)
+      const { data } = await inventoryService.getHistory(
+        productId ?? undefined,
+      )
       setHistory(data)
     } catch (error) {
       handleApiError(error)
+      setHistory([])
     } finally {
       setHistoryLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadHistory(filterProductId)
+  }, [filterProductId, loadHistory])
 
   const submitAdjustment = async (
     values: InventoryAdjustmentRequest,
@@ -81,9 +111,7 @@ export function InventoryPage() {
         negativeForm.resetFields()
         message.success('Ajuste negativo registrado')
       }
-      if (selectedProductId === values.productId) {
-        void loadHistory(values.productId)
-      }
+      void loadHistory(filterProductId)
     } catch (error) {
       handleApiError(error)
     } finally {
@@ -96,53 +124,89 @@ export function InventoryPage() {
     label: `${p.name} (stock: ${p.stock})`,
   }))
 
+  const kardexTable = (
+    <>
+      <div className="kardex-toolbar">
+        <Select
+          showSearch
+          allowClear
+          placeholder="Filtrar por producto (todos)"
+          suffixIcon={<SearchOutlined />}
+          style={{ minWidth: 320 }}
+          options={productOptions}
+          value={filterProductId ?? undefined}
+          onChange={(id) => setFilterProductId(id ?? null)}
+        />
+        <Button
+          icon={<ReloadOutlined />}
+          loading={historyLoading}
+          onClick={() => void loadHistory(filterProductId)}
+        >
+          Actualizar
+        </Button>
+      </div>
+      <Table
+        rowKey="id"
+        loading={historyLoading}
+        dataSource={history}
+        locale={{
+          emptyText: (
+            <Empty
+              description={
+                filterProductId
+                  ? 'Sin movimientos para este producto'
+                  : 'Sin movimientos registrados en el kardex'
+              }
+            />
+          ),
+        }}
+        pagination={{ pageSize: 10, showSizeChanger: true }}
+        columns={[
+          {
+            title: 'Fecha',
+            dataIndex: 'movementDate',
+            width: 170,
+            render: (v: string) => formatDateTime(v),
+          },
+          { title: 'Producto', dataIndex: 'productName' },
+          {
+            title: 'Tipo',
+            dataIndex: 'type',
+            render: (t: string, record: InventoryMovementResponse) => (
+              <Tag color={getMovementColor(t, record.reason)}>
+                {getMovementLabel(t, record.reason)}
+              </Tag>
+            ),
+          },
+          { title: 'Cantidad', dataIndex: 'quantity', align: 'center' },
+          { title: 'Stock antes', dataIndex: 'stockBefore', align: 'center' },
+          { title: 'Stock después', dataIndex: 'stockAfter', align: 'center' },
+          { title: 'Motivo', dataIndex: 'reason', ellipsis: true },
+          { title: 'Usuario', dataIndex: 'createdBy', width: 120 },
+        ]}
+      />
+      {!historyLoading && history.length > 0 && (
+        <Text type="secondary">
+          {history.length} movimiento{history.length === 1 ? '' : 's'} en el
+          kardex
+          {filterProductId ? ' del producto seleccionado' : ''}.
+        </Text>
+      )}
+    </>
+  )
+
   const tabItems = [
     {
-      key: 'history',
-      label: 'Historial',
-      children: (
-        <>
-          <Select
-            showSearch
-            placeholder="Seleccionar producto"
-            style={{ width: 320, marginBottom: 16 }}
-            options={productOptions}
-            onChange={(id) => void loadHistory(id)}
-          />
-          <Table
-            rowKey="id"
-            loading={historyLoading}
-            dataSource={history}
-            columns={[
-              { title: 'Producto', dataIndex: 'productName' },
-              {
-                title: 'Tipo',
-                dataIndex: 'type',
-                render: (t: string) => (
-                  <Tag>{movementTypeLabels[t] ?? t}</Tag>
-                ),
-              },
-              { title: 'Cantidad', dataIndex: 'quantity', align: 'center' },
-              { title: 'Antes', dataIndex: 'stockBefore', align: 'center' },
-              { title: 'Después', dataIndex: 'stockAfter', align: 'center' },
-              { title: 'Motivo', dataIndex: 'reason' },
-              { title: 'Usuario', dataIndex: 'createdBy' },
-              {
-                title: 'Fecha',
-                dataIndex: 'movementDate',
-                render: (v: string) => formatDateTime(v),
-              },
-            ]}
-          />
-        </>
-      ),
+      key: 'kardex',
+      label: 'Kardex',
+      children: kardexTable,
     },
   ]
 
   if (canAdjustInventory) {
-    tabItems.unshift({
+    tabItems.push({
       key: 'adjustments',
-      label: 'Ajustes (Admin)',
+      label: 'Ajustes manuales',
       children: (
         <div className="inventory-adjustments">
           <Card title="Ajuste positivo" size="small">
@@ -193,10 +257,10 @@ export function InventoryPage() {
   return (
     <div>
       <PageHeader
-        title="Inventario"
-        subtitle="Historial y ajustes de inventario"
+        title="Ajustes de stock"
+        subtitle="Kardex de medicamentos e insumos de la clínica"
       />
-      <Tabs items={tabItems} />
+      <Tabs defaultActiveKey="kardex" items={tabItems} />
     </div>
   )
 }

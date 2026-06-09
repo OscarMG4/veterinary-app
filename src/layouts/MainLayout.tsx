@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Avatar,
-  Badge,
   Dropdown,
   Layout,
   Menu,
+  Tag,
   theme,
   Typography,
 } from 'antd'
@@ -19,14 +19,14 @@ import {
   ShoppingCartOutlined,
   ShoppingOutlined,
   DatabaseOutlined,
-  FileExcelOutlined,
+  SwapOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MedicineBoxOutlined,
 } from '@ant-design/icons'
+import { PawIcon } from '../components/icons/PawIcon'
 import type { MenuProps } from 'antd'
-import { ROUTES } from '../constants/routes'
+import { INVENTORY_MENU_KEY, ROUTES } from '../constants/routes'
 import { useAuth } from '../hooks/useAuth'
 import { usePermissions } from '../hooks/usePermissions'
 
@@ -35,11 +35,20 @@ const { Text } = Typography
 
 export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [openKeys, setOpenKeys] = useState<string[]>([])
   const navigate = useNavigate()
   const location = useLocation()
   const { username, role, logout } = useAuth()
-  const { canManageUsers, canExport } = usePermissions()
+  const { canManageUsers } = usePermissions()
   const { token: themeToken } = theme.useToken()
+
+  const isInventoryRoute = location.pathname.startsWith(ROUTES.INVENTORY_MODULE)
+
+  useEffect(() => {
+    if (isInventoryRoute) {
+      setOpenKeys([INVENTORY_MENU_KEY])
+    }
+  }, [isInventoryRoute])
 
   const menuItems: MenuProps['items'] = useMemo(() => {
     const items: MenuProps['items'] = [
@@ -47,26 +56,6 @@ export function MainLayout() {
         key: ROUTES.DASHBOARD,
         icon: <DashboardOutlined />,
         label: 'Dashboard',
-      },
-      {
-        key: ROUTES.PRODUCTS,
-        icon: <AppstoreOutlined />,
-        label: 'Productos',
-      },
-      {
-        key: ROUTES.CATEGORIES,
-        icon: <TagsOutlined />,
-        label: 'Categorías',
-      },
-      {
-        key: ROUTES.CUSTOMERS,
-        icon: <TeamOutlined />,
-        label: 'Clientes',
-      },
-      {
-        key: ROUTES.SUPPLIERS,
-        icon: <ShopOutlined />,
-        label: 'Proveedores',
       },
       {
         key: ROUTES.SALES,
@@ -79,30 +68,49 @@ export function MainLayout() {
         label: 'Compras',
       },
       {
-        key: ROUTES.INVENTORY,
+        key: INVENTORY_MENU_KEY,
         icon: <DatabaseOutlined />,
         label: 'Inventario',
+        children: [
+          {
+            key: ROUTES.PRODUCTS,
+            icon: <AppstoreOutlined />,
+            label: 'Productos',
+          },
+          {
+            key: ROUTES.CATEGORIES,
+            icon: <TagsOutlined />,
+            label: 'Categorías',
+          },
+          {
+            key: ROUTES.INVENTORY_ADJUSTMENTS,
+            icon: <SwapOutlined />,
+            label: 'Ajustes de stock',
+          },
+        ],
+      },
+      {
+        key: ROUTES.CUSTOMERS,
+        icon: <TeamOutlined />,
+        label: 'Clientes',
+      },
+      {
+        key: ROUTES.SUPPLIERS,
+        icon: <ShopOutlined />,
+        label: 'Proveedores',
       },
     ]
 
     if (canManageUsers) {
-      items.splice(1, 0, {
+      items.push({
         key: ROUTES.USERS,
         icon: <UserOutlined />,
         label: 'Usuarios',
       })
     }
 
-    if (canExport) {
-      items.push({
-        key: ROUTES.EXPORT,
-        icon: <FileExcelOutlined />,
-        label: 'Exportar ventas',
-      })
-    }
-
     return items
-  }, [canManageUsers, canExport])
+  }, [canManageUsers])
 
   const userMenu: MenuProps['items'] = [
     {
@@ -134,26 +142,34 @@ export function MainLayout() {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="lg"
-        width={240}
+        width={260}
         className="main-sider"
+        trigger={null}
       >
         <div className="brand">
-          <MedicineBoxOutlined className="brand-icon" />
-          {!collapsed && <span>VetERP</span>}
+          <div className="brand-icon-wrap">
+            <PawIcon className="brand-icon" size={36} />
+          </div>
+          {!collapsed && (
+            <div className="brand-text">
+              <span className="brand-name">VetERP</span>
+              <span className="brand-tagline">Clínica veterinaria</span>
+            </div>
+          )}
         </div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
+          openKeys={collapsed ? [] : openKeys}
+          onOpenChange={setOpenKeys}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
+          className="main-menu"
         />
       </Sider>
-      <Layout>
-        <Header
-          className="main-header"
-          style={{ background: themeToken.colorBgContainer }}
-        >
+      <Layout className="main-layout-inner">
+        <Header className="main-header">
           <button
             type="button"
             className="collapse-trigger"
@@ -163,23 +179,35 @@ export function MainLayout() {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </button>
           <div className="header-right">
-            <Badge
-              color={role === 'ADMIN' ? 'blue' : 'cyan'}
-              text={role === 'ADMIN' ? 'Admin' : 'Staff'}
-            />
+            <Tag
+              color={role === 'ADMIN' ? 'green' : 'default'}
+              className="role-tag"
+            >
+              {role === 'ADMIN' ? 'Administrador' : 'Personal'}
+            </Tag>
             <Dropdown menu={{ items: userMenu }} placement="bottomRight">
               <div className="user-info">
                 <Avatar
-                  style={{ backgroundColor: themeToken.colorPrimary }}
+                  size={38}
+                  style={{
+                    background: `linear-gradient(135deg, ${themeToken.colorPrimary}, #10b981)`,
+                  }}
                   icon={<UserOutlined />}
                 />
-                <Text strong>{username ?? 'Usuario'}</Text>
+                <div className="user-info-text">
+                  <Text strong>{username ?? 'Usuario'}</Text>
+                  <Text type="secondary" className="user-info-role">
+                    {role === 'ADMIN' ? 'Admin' : 'Staff'}
+                  </Text>
+                </div>
               </div>
             </Dropdown>
           </div>
         </Header>
         <Content className="main-content">
-          <Outlet />
+          <div className="main-content-inner">
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

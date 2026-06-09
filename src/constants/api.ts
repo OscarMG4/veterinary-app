@@ -17,7 +17,8 @@ export const API_ENDPOINTS = {
   INVENTORY: {
     ADJUSTMENT_POSITIVE: '/inventory/adjustment/positive',
     ADJUSTMENT_NEGATIVE: '/inventory/adjustment/negative',
-    HISTORY: (productId: number) => `/inventory/history/${productId}`,
+    HISTORY: '/inventory/history',
+    HISTORY_BY_PRODUCT: (productId: number) => `/inventory/history/${productId}`,
   },
   DASHBOARD: {
     SALES_DAY: '/dashboard/sales/day',
@@ -25,6 +26,7 @@ export const API_ENDPOINTS = {
     PURCHASES_SUPPLIERS: '/dashboard/purchases/suppliers',
     PRODUCTS_TOP: '/dashboard/products/top',
     STOCK_LOW: '/dashboard/stock/low',
+    SALES_TREND: '/dashboard/sales/trend',
   },
   EXPORT: {
     SALES: '/export/sales',

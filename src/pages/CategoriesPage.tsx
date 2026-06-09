@@ -96,7 +96,7 @@ export function CategoriesPage() {
     <div>
       <PageHeader
         title="Categorías"
-        subtitle="Clasificación de productos"
+        subtitle="Tipos de medicamentos e insumos"
         extra={
           canManageCategories ? (
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>

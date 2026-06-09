@@ -2,6 +2,7 @@ import { apiClient } from '../api/client'
 import { API_ENDPOINTS } from '../constants/api'
 import type {
   LowStockStat,
+  SalesTrendStat,
   SupplierPurchaseStat,
   TopProductStat,
 } from '../interfaces/dashboard'
@@ -11,6 +12,10 @@ export const dashboardService = {
     apiClient.get<number>(API_ENDPOINTS.DASHBOARD.SALES_DAY),
   salesMonth: (month: number, year: number) =>
     apiClient.get<number>(API_ENDPOINTS.DASHBOARD.SALES_MONTH, {
+      params: { month, year },
+    }),
+  salesTrend: (month: number, year: number) =>
+    apiClient.get<SalesTrendStat[]>(API_ENDPOINTS.DASHBOARD.SALES_TREND, {
       params: { month, year },
     }),
   purchasesBySupplier: () =>

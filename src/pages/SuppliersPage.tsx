@@ -98,7 +98,7 @@ export function SuppliersPage() {
     <div>
       <PageHeader
         title="Proveedores"
-        subtitle="Gestión de proveedores"
+        subtitle="Laboratorios y distribuidores veterinarios"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Nuevo proveedor
