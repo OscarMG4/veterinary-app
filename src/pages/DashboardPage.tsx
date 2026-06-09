@@ -28,9 +28,7 @@ import { formatCurrency } from '../utils/format'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { handleApiError } from '../utils/errorHandler'
 import { DashboardWelcomeBanner } from '../components/dashboard/DashboardWelcomeBanner'
-import { DashboardExportSection } from '../components/dashboard/DashboardExportSection'
 import { StatCard } from '../components/dashboard/StatCard'
-import { usePermissions } from '../hooks/usePermissions'
 
 interface DashboardData {
   salesDay: number
@@ -51,7 +49,6 @@ const emptyDashboard: DashboardData = {
 }
 
 export function DashboardPage() {
-  const { canExport } = usePermissions()
   const [selectedMonth, setSelectedMonth] = useState(dayjs())
   const monthKey = selectedMonth.format('YYYY-MM')
   const monthLabel = selectedMonth.format('MMMM YYYY')
@@ -188,14 +185,6 @@ export function DashboardPage() {
           </Card>
         </Col>
       </Row>
-
-      {canExport && (
-        <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col xs={24}>
-            <DashboardExportSection />
-          </Col>
-        </Row>
-      )}
     </div>
   )
 }

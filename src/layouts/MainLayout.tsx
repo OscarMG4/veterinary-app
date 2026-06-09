@@ -23,10 +23,17 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  UnorderedListOutlined,
+  FormOutlined,
 } from '@ant-design/icons'
 import { PawIcon } from '../components/icons/PawIcon'
 import type { MenuProps } from 'antd'
-import { INVENTORY_MENU_KEY, ROUTES } from '../constants/routes'
+import {
+  INVENTORY_MENU_KEY,
+  PURCHASES_MENU_KEY,
+  ROUTES,
+  SALES_MENU_KEY,
+} from '../constants/routes'
 import { useAuth } from '../hooks/useAuth'
 import { usePermissions } from '../hooks/usePermissions'
 
@@ -43,12 +50,18 @@ export function MainLayout() {
   const { token: themeToken } = theme.useToken()
 
   const isInventoryRoute = location.pathname.startsWith(ROUTES.INVENTORY_MODULE)
+  const isSalesRoute = location.pathname.startsWith(ROUTES.SALES_MODULE)
+  const isPurchasesRoute = location.pathname.startsWith(ROUTES.PURCHASES_MODULE)
 
   useEffect(() => {
-    if (isInventoryRoute) {
-      setOpenKeys([INVENTORY_MENU_KEY])
+    const keys: string[] = []
+    if (isInventoryRoute) keys.push(INVENTORY_MENU_KEY)
+    if (isSalesRoute) keys.push(SALES_MENU_KEY)
+    if (isPurchasesRoute) keys.push(PURCHASES_MENU_KEY)
+    if (keys.length > 0) {
+      setOpenKeys(keys)
     }
-  }, [isInventoryRoute])
+  }, [isInventoryRoute, isSalesRoute, isPurchasesRoute])
 
   const menuItems: MenuProps['items'] = useMemo(() => {
     const items: MenuProps['items'] = [
@@ -58,14 +71,38 @@ export function MainLayout() {
         label: 'Dashboard',
       },
       {
-        key: ROUTES.SALES,
+        key: SALES_MENU_KEY,
         icon: <ShoppingCartOutlined />,
         label: 'Ventas',
+        children: [
+          {
+            key: ROUTES.SALES_LIST,
+            icon: <UnorderedListOutlined />,
+            label: 'Listado de ventas',
+          },
+          {
+            key: ROUTES.SALES_REGISTER,
+            icon: <FormOutlined />,
+            label: 'Registrar venta',
+          },
+        ],
       },
       {
-        key: ROUTES.PURCHASES,
+        key: PURCHASES_MENU_KEY,
         icon: <ShoppingOutlined />,
         label: 'Compras',
+        children: [
+          {
+            key: ROUTES.PURCHASES_LIST,
+            icon: <UnorderedListOutlined />,
+            label: 'Listado de compras',
+          },
+          {
+            key: ROUTES.PURCHASES_REGISTER,
+            icon: <FormOutlined />,
+            label: 'Registrar compra',
+          },
+        ],
       },
       {
         key: INVENTORY_MENU_KEY,

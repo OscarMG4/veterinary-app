@@ -9,8 +9,12 @@ import { ProductsPage } from '../pages/ProductsPage'
 import { CategoriesPage } from '../pages/CategoriesPage'
 import { CustomersPage } from '../pages/CustomersPage'
 import { SuppliersPage } from '../pages/SuppliersPage'
-import { SalesPage } from '../pages/SalesPage'
-import { PurchasesPage } from '../pages/PurchasesPage'
+import { SalesListPage } from '../pages/SalesListPage'
+import { PurchasesListPage } from '../pages/PurchasesListPage'
+import { RegisterSalePage } from '../pages/SalesPage'
+import { RegisterPurchasePage } from '../pages/PurchasesPage'
+import { EditSalePage } from '../pages/EditSalePage'
+import { EditPurchasePage } from '../pages/EditPurchasePage'
 import { InventoryPage } from '../pages/InventoryPage'
 
 function AdminRoute() {
@@ -45,8 +49,26 @@ export function AppRoutes() {
             />
             <Route path={ROUTES.CUSTOMERS} element={<CustomersPage />} />
             <Route path={ROUTES.SUPPLIERS} element={<SuppliersPage />} />
-            <Route path={ROUTES.SALES} element={<SalesPage />} />
-            <Route path={ROUTES.PURCHASES} element={<PurchasesPage />} />
+            <Route
+              path={ROUTES.SALES_MODULE}
+              element={<Navigate to={ROUTES.SALES_LIST} replace />}
+            />
+            <Route path={ROUTES.SALES_LIST} element={<SalesListPage />} />
+            <Route path={ROUTES.SALES_REGISTER} element={<RegisterSalePage />} />
+            <Route path={`${ROUTES.SALES_EDIT}/:id`} element={<EditSalePage />} />
+            <Route
+              path={ROUTES.PURCHASES_MODULE}
+              element={<Navigate to={ROUTES.PURCHASES_LIST} replace />}
+            />
+            <Route path={ROUTES.PURCHASES_LIST} element={<PurchasesListPage />} />
+            <Route
+              path={ROUTES.PURCHASES_REGISTER}
+              element={<RegisterPurchasePage />}
+            />
+            <Route
+              path={`${ROUTES.PURCHASES_EDIT}/:id`}
+              element={<EditPurchasePage />}
+            />
             <Route element={<AdminRoute />}>
               <Route path={ROUTES.USERS} element={<UsersPage />} />
             </Route>

@@ -30,5 +30,6 @@ export const API_ENDPOINTS = {
   },
   EXPORT: {
     SALES: '/export/sales',
+    PURCHASES: '/export/purchases',
   },
 } as const

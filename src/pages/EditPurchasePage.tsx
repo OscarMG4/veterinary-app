@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Button,
   Form,
   Select,
+  Spin,
   Typography,
   message,
 } from 'antd'
-import { ShoppingOutlined, SearchOutlined } from '@ant-design/icons'
+import { SaveOutlined, SearchOutlined } from '@ant-design/icons'
 import { PageHeader } from '../components/PageHeader'
 import {
   LineItemsEditor,
@@ -20,11 +22,12 @@ import { productService } from '../services/productService'
 import type { SupplierResponse } from '../interfaces/supplier'
 import type { ProductResponse } from '../interfaces/product'
 import type { PurchaseRequest } from '../interfaces/purchase'
+import { ROUTES } from '../constants/routes'
 import { formatCurrency, roundPrice } from '../utils/format'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { handleApiError } from '../utils/errorHandler'
 
-const { Text, Title } = Typography
+const { Title } = Typography
 
 interface PurchaseFormValues {
   supplierId: number
@@ -36,7 +39,14 @@ interface PurchaseCatalogData {
   products: ProductResponse[]
 }
 
-export function RegisterPurchasePage() {
+export function EditPurchasePage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const purchaseId = Number(id)
+  const [form] = Form.useForm<PurchaseFormValues>()
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const [loadingPurchase, setLoadingPurchase] = useState(true)
+
   const { data: catalog } = useAsyncData<PurchaseCatalogData>(
     async () => {
       try {
@@ -57,12 +67,37 @@ export function RegisterPurchasePage() {
   const suppliers = catalog?.suppliers ?? []
   const products = catalog?.products ?? []
 
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const [lastPurchase, setLastPurchase] = useState<string | null>(null)
-  const [form] = Form.useForm<PurchaseFormValues>()
-
   const items = Form.useWatch('items', form) ?? []
   const total = computeLineItemsSubtotal(items)
+
+  useEffect(() => {
+    if (!purchaseId || Number.isNaN(purchaseId)) {
+      navigate(ROUTES.PURCHASES_LIST)
+      return
+    }
+
+    const loadPurchase = async () => {
+      setLoadingPurchase(true)
+      try {
+        const { data } = await purchaseService.getById(purchaseId)
+        form.setFieldsValue({
+          supplierId: data.supplierId,
+          items: data.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: roundPrice(item.price),
+          })),
+        })
+      } catch (error) {
+        handleApiError(error)
+        navigate(ROUTES.PURCHASES_LIST)
+      } finally {
+        setLoadingPurchase(false)
+      }
+    }
+
+    void loadPurchase()
+  }, [purchaseId, form, navigate])
 
   const onProductChange = (productId: number, index: number) => {
     const product = products.find((p) => p.id === productId)
@@ -85,15 +120,9 @@ export function RegisterPurchasePage() {
         supplierId: values.supplierId,
         items: mapLineItemsForApi(values.items),
       }
-      const { data } = await purchaseService.create(payload)
-      message.success(`Compra registrada: ${data.documentNumber}`)
-      setLastPurchase(
-        `${data.documentNumber} — Total: ${formatCurrency(data.total)}`,
-      )
-      form.resetFields()
-      form.setFieldsValue({
-        items: [{ quantity: 1, price: 0 }],
-      })
+      const { data } = await purchaseService.update(purchaseId, payload)
+      message.success(`Compra actualizada: ${data.documentNumber}`)
+      navigate(ROUTES.PURCHASES_LIST)
     } catch (error) {
       handleApiError(error)
     } finally {
@@ -101,28 +130,23 @@ export function RegisterPurchasePage() {
     }
   }
 
+  if (loadingPurchase) {
+    return (
+      <div className="page-loading">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
-        title="Registrar compra"
-        subtitle="Registra una nueva compra de insumos y medicamentos"
+        title="Editar compra"
+        subtitle="Modifica los datos de la compra seleccionada"
       />
 
-      {lastPurchase && (
-        <div className="transaction-success-banner">
-          <Text type="success">Última compra: {lastPurchase}</Text>
-        </div>
-      )}
-
       <div className="transaction-form">
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            items: [{ quantity: 1, price: 0 }],
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <section className="transaction-section">
             <Title level={5} className="transaction-section-title">
               Proveedor
@@ -166,16 +190,21 @@ export function RegisterPurchasePage() {
                 <strong>{formatCurrency(total)}</strong>
               </div>
             </div>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitLoading}
-              icon={<ShoppingOutlined />}
-              size="large"
-              className="transaction-submit-btn"
-            >
-              Registrar compra
-            </Button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Button size="large" onClick={() => navigate(ROUTES.PURCHASES_LIST)}>
+                Cancelar
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={submitLoading}
+                icon={<SaveOutlined />}
+                size="large"
+                className="transaction-submit-btn"
+              >
+                Guardar cambios
+              </Button>
+            </div>
           </div>
         </Form>
       </div>

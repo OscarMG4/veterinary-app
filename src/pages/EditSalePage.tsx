@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Button,
   Form,
   InputNumber,
   Select,
+  Spin,
   Typography,
   message,
 } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined } from '@ant-design/icons'
+import { SaveOutlined, SearchOutlined } from '@ant-design/icons'
 import { PageHeader } from '../components/PageHeader'
 import {
   LineItemsEditor,
@@ -21,11 +23,12 @@ import { productService } from '../services/productService'
 import type { CustomerResponse } from '../interfaces/customer'
 import type { ProductResponse } from '../interfaces/product'
 import type { SaleRequest } from '../interfaces/sale'
+import { ROUTES } from '../constants/routes'
 import { formatCurrency, roundPrice } from '../utils/format'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { handleApiError } from '../utils/errorHandler'
 
-const { Text, Title } = Typography
+const { Title } = Typography
 
 interface SaleFormValues {
   customerId: number
@@ -38,7 +41,14 @@ interface SaleCatalogData {
   products: ProductResponse[]
 }
 
-export function RegisterSalePage() {
+export function EditSalePage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const saleId = Number(id)
+  const [form] = Form.useForm<SaleFormValues>()
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const [loadingSale, setLoadingSale] = useState(true)
+
   const { data: catalog } = useAsyncData<SaleCatalogData>(
     async () => {
       try {
@@ -59,14 +69,40 @@ export function RegisterSalePage() {
   const customers = catalog?.customers ?? []
   const products = catalog?.products ?? []
 
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const [lastSale, setLastSale] = useState<string | null>(null)
-  const [form] = Form.useForm<SaleFormValues>()
-
   const items = Form.useWatch('items', form) ?? []
   const subtotal = computeLineItemsSubtotal(items)
   const discount = Form.useWatch('discount', form) ?? 0
   const total = Math.max(subtotal - discount, 0)
+
+  useEffect(() => {
+    if (!saleId || Number.isNaN(saleId)) {
+      navigate(ROUTES.SALES_LIST)
+      return
+    }
+
+    const loadSale = async () => {
+      setLoadingSale(true)
+      try {
+        const { data } = await saleService.getById(saleId)
+        form.setFieldsValue({
+          customerId: data.customerId,
+          discount: data.discount ?? 0,
+          items: data.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: roundPrice(item.price),
+          })),
+        })
+      } catch (error) {
+        handleApiError(error)
+        navigate(ROUTES.SALES_LIST)
+      } finally {
+        setLoadingSale(false)
+      }
+    }
+
+    void loadSale()
+  }, [saleId, form, navigate])
 
   const onProductChange = (productId: number, index: number) => {
     const product = products.find((p) => p.id === productId)
@@ -90,16 +126,9 @@ export function RegisterSalePage() {
         discount: values.discount ?? 0,
         items: mapLineItemsForApi(values.items),
       }
-      const { data } = await saleService.create(payload)
-      message.success(`Venta registrada: ${data.documentNumber}`)
-      setLastSale(
-        `${data.documentNumber} — Total: ${formatCurrency(data.total)}`,
-      )
-      form.resetFields()
-      form.setFieldsValue({
-        items: [{ quantity: 1, price: 0 }],
-        discount: 0,
-      })
+      const { data } = await saleService.update(saleId, payload)
+      message.success(`Venta actualizada: ${data.documentNumber}`)
+      navigate(ROUTES.SALES_LIST)
     } catch (error) {
       handleApiError(error)
     } finally {
@@ -107,29 +136,23 @@ export function RegisterSalePage() {
     }
   }
 
+  if (loadingSale) {
+    return (
+      <div className="page-loading">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
-        title="Registrar venta"
-        subtitle="Registra una nueva venta de medicamentos e insumos"
+        title="Editar venta"
+        subtitle="Modifica los datos de la venta seleccionada"
       />
 
-      {lastSale && (
-        <div className="transaction-success-banner">
-          <Text type="success">Última venta: {lastSale}</Text>
-        </div>
-      )}
-
       <div className="transaction-form">
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            items: [{ quantity: 1, price: 0 }],
-            discount: 0,
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <section className="transaction-section">
             <Title level={5} className="transaction-section-title">
               Cliente
@@ -188,16 +211,21 @@ export function RegisterSalePage() {
                 <strong>{formatCurrency(total)}</strong>
               </div>
             </div>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitLoading}
-              icon={<ShoppingCartOutlined />}
-              size="large"
-              className="transaction-submit-btn"
-            >
-              Registrar venta
-            </Button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Button size="large" onClick={() => navigate(ROUTES.SALES_LIST)}>
+                Cancelar
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={submitLoading}
+                icon={<SaveOutlined />}
+                size="large"
+                className="transaction-submit-btn"
+              >
+                Guardar cambios
+              </Button>
+            </div>
           </div>
         </Form>
       </div>

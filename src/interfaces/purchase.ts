@@ -9,6 +9,23 @@ export interface PurchaseRequest {
   items: PurchaseItemRequest[]
 }
 
+export interface PurchaseDetailResponse {
+  id: number
+  documentNumber: string
+  supplierId: number
+  items: PurchaseItemRequest[]
+}
+
+export interface PurchaseListResponse {
+  id: number
+  documentNumber: string
+  purchaseDate: string
+  supplierName: string
+  total: number
+  createdBy: string
+  products: string[]
+}
+
 export interface PurchaseResponse {
   id: number
   documentNumber: string

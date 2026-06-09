@@ -6,4 +6,8 @@ export const exportService = {
     apiClient.get<Blob>(API_ENDPOINTS.EXPORT.SALES, {
       responseType: 'blob',
     }),
+  downloadPurchases: () =>
+    apiClient.get<Blob>(API_ENDPOINTS.EXPORT.PURCHASES, {
+      responseType: 'blob',
+    }),
 }
