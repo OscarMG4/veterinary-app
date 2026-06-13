@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { Spin } from 'antd'
 import { ROUTES } from '../constants/routes'
+import { usePermissions } from '../hooks/usePermissions'
 import { useAuth } from '../hooks/useAuth'
 import type { UserRole } from '../interfaces/auth'
 
@@ -10,6 +11,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ roles }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, role } = useAuth()
+  const { homeRoute } = usePermissions()
 
   if (isLoading) {
     return (
@@ -24,7 +26,7 @@ export function ProtectedRoute({ roles }: ProtectedRouteProps) {
   }
 
   if (roles && role && !roles.includes(role)) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />
+    return <Navigate to={homeRoute} replace />
   }
 
   return <Outlet />

@@ -2,21 +2,29 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   Button,
   Card,
+  Dropdown,
   Empty,
   Form,
   Input,
   InputNumber,
   Select,
+  Space,
   Table,
   Tabs,
   Tag,
   Typography,
   message,
 } from 'antd'
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import {
+  FileExcelOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons'
+import type { MenuProps } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { inventoryService } from '../services/inventoryService'
 import { productService } from '../services/productService'
+import { exportService } from '../services/exportService'
 import type { ProductResponse } from '../interfaces/product'
 import type {
   InventoryAdjustmentRequest,
@@ -25,6 +33,7 @@ import type {
 import { useAsyncData } from '../hooks/useAsyncData'
 import { usePermissions } from '../hooks/usePermissions'
 import { formatDateTime } from '../utils/format'
+import { buildExportFilename, downloadBlob } from '../utils/downloadBlob'
 import { handleApiError } from '../utils/errorHandler'
 
 const { Text } = Typography
@@ -55,7 +64,7 @@ function getMovementColor(type: string, reason?: string): string {
 }
 
 export function InventoryPage() {
-  const { canAdjustInventory } = usePermissions()
+  const { canAdjustInventory, canExport } = usePermissions()
   const { data: products = [] } = useAsyncData(
     async () => {
       try {
@@ -76,6 +85,74 @@ export function InventoryPage() {
   const [adjustLoading, setAdjustLoading] = useState(false)
   const [positiveForm] = Form.useForm<InventoryAdjustmentRequest>()
   const [negativeForm] = Form.useForm<InventoryAdjustmentRequest>()
+
+  const [exportLoading, setExportLoading] = useState<string | null>(null)
+
+  const handleExport = async (
+    key: 'entries' | 'exits' | 'balances' | 'rotation',
+  ) => {
+    setExportLoading(key)
+    try {
+      const exporters = {
+        entries: {
+          fn: exportService.downloadInventoryEntries,
+          prefix: 'entradas_inventario' as const,
+          label: 'Entradas',
+        },
+        exits: {
+          fn: exportService.downloadInventoryExits,
+          prefix: 'salidas_inventario' as const,
+          label: 'Salidas',
+        },
+        balances: {
+          fn: exportService.downloadInventoryBalances,
+          prefix: 'saldos_inventario' as const,
+          label: 'Saldos',
+        },
+        rotation: {
+          fn: exportService.downloadProductRotation,
+          prefix: 'rotacion_productos' as const,
+          label: 'Rotación',
+        },
+      }
+
+      const { fn, prefix, label } = exporters[key]
+      const { data } = await fn()
+      downloadBlob(data, buildExportFilename(prefix))
+      message.success(`Reporte de ${label} descargado`)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setExportLoading(null)
+    }
+  }
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'entries',
+      icon: <FileExcelOutlined />,
+      label: 'Entradas de inventario',
+      onClick: () => void handleExport('entries'),
+    },
+    {
+      key: 'exits',
+      icon: <FileExcelOutlined />,
+      label: 'Salidas de inventario',
+      onClick: () => void handleExport('exits'),
+    },
+    {
+      key: 'balances',
+      icon: <FileExcelOutlined />,
+      label: 'Saldos actuales',
+      onClick: () => void handleExport('balances'),
+    },
+    {
+      key: 'rotation',
+      icon: <FileExcelOutlined />,
+      label: 'Rotación de productos',
+      onClick: () => void handleExport('rotation'),
+    },
+  ]
 
   const loadHistory = useCallback(async (productId?: number | null) => {
     setHistoryLoading(true)
@@ -137,13 +214,29 @@ export function InventoryPage() {
           value={filterProductId ?? undefined}
           onChange={(id) => setFilterProductId(id ?? null)}
         />
-        <Button
-          icon={<ReloadOutlined />}
-          loading={historyLoading}
-          onClick={() => void loadHistory(filterProductId)}
-        >
-          Actualizar
-        </Button>
+        <Space wrap>
+          {canExport && (
+            <Dropdown
+              menu={{ items: exportMenuItems }}
+              trigger={['click']}
+            >
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                loading={exportLoading !== null}
+              >
+                Reportes Excel
+              </Button>
+            </Dropdown>
+          )}
+          <Button
+            icon={<ReloadOutlined />}
+            loading={historyLoading}
+            onClick={() => void loadHistory(filterProductId)}
+          >
+            Actualizar
+          </Button>
+        </Space>
       </div>
       <Table
         rowKey="id"

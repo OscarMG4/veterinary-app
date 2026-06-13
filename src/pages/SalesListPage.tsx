@@ -21,7 +21,7 @@ import { handleApiError } from '../utils/errorHandler'
 
 export function SalesListPage() {
   const navigate = useNavigate()
-  const { canDelete, canExport } = usePermissions()
+  const { canDelete, canExport, isAdmin } = usePermissions()
   const [search, setSearch] = useState('')
   const [exportLoading, setExportLoading] = useState(false)
 
@@ -155,31 +155,35 @@ export function SalesListPage() {
       key: 'createdBy',
       width: 140,
     },
-    {
-      title: 'Acciones',
-      key: 'actions',
-      width: 120,
-      fixed: 'right' as const,
-      render: (_: unknown, record: SaleListResponse) => (
-        <Space size="small">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            aria-label="Editar venta"
-            onClick={() => navigate(salesEditPath(record.id))}
-          />
-          {canDelete && (
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              aria-label="Eliminar venta"
-              onClick={() => onDelete(record)}
-            />
-          )}
-        </Space>
-      ),
-    },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Acciones',
+            key: 'actions',
+            width: 120,
+            fixed: 'right' as const,
+            render: (_: unknown, record: SaleListResponse) => (
+              <Space size="small">
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  aria-label="Editar venta"
+                  onClick={() => navigate(salesEditPath(record.id))}
+                />
+                {canDelete && (
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    aria-label="Eliminar venta"
+                    onClick={() => onDelete(record)}
+                  />
+                )}
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

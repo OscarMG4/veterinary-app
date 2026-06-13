@@ -1,8 +1,8 @@
 export function formatCurrency(value: number | string | undefined): string {
   const num = Number(value ?? 0)
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat('es-PE', {
     style: 'currency',
-    currency: 'COP',
+    currency: 'PEN',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num)
@@ -11,9 +11,16 @@ export function formatCurrency(value: number | string | undefined): string {
 /** Número simple con 2 decimales, sin símbolo de moneda */
 export function formatPrice(value: number | string | undefined): string {
   const num = Number(value ?? 0)
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat('es-PE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+  }).format(num)
+}
+
+export function formatNumber(value: number | string | undefined): string {
+  const num = Number(value ?? 0)
+  return new Intl.NumberFormat('es-PE', {
+    maximumFractionDigits: 0,
   }).format(num)
 }
 
@@ -23,5 +30,5 @@ export function roundPrice(value: number | string | undefined): number {
 
 export function formatDateTime(value: string | undefined): string {
   if (!value) return '-'
-  return new Date(value).toLocaleString('es-CO')
+  return new Date(value).toLocaleString('es-PE')
 }

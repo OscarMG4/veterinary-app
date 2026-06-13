@@ -6,7 +6,7 @@ interface StatCardProps {
   value: number | string
   icon: ReactNode
   loading?: boolean
-  variant: 'primary' | 'info' | 'warning' | 'success'
+  variant: 'primary' | 'info' | 'warning' | 'success' | 'danger' | 'purple'
   formatter?: (value: number | string) => string
 }
 

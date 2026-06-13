@@ -10,31 +10,33 @@ import {
 } from '@ant-design/icons'
 import { PawIcon } from '../components/icons/PawIcon'
 import { PET_IMAGES } from '../constants/images'
-import { ROUTES } from '../constants/routes'
 import { useAuth } from '../hooks/useAuth'
-import type { LoginRequest } from '../interfaces/auth'
+import { getHomeRoute } from '../utils/permissions'
+import { STORAGE_KEYS } from '../constants/storage'
+import type { LoginRequest, UserRole } from '../interfaces/auth'
 import { handleApiError } from '../utils/errorHandler'
 
 const { Title, Text, Paragraph } = Typography
 
 export function LoginPage() {
   const [loading, setLoading] = useState(false)
-  const { login, isAuthenticated } = useAuth()
+  const { login, isAuthenticated, role } = useAuth()
   const navigate = useNavigate()
   const [form] = Form.useForm<LoginRequest>()
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(ROUTES.DASHBOARD, { replace: true })
+      navigate(getHomeRoute(role), { replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, role])
 
   const onFinish = async (values: LoginRequest) => {
     setLoading(true)
     try {
       await login(values)
       message.success('Bienvenido a tu clínica veterinaria')
-      navigate(ROUTES.DASHBOARD, { replace: true })
+      const storedRole = localStorage.getItem(STORAGE_KEYS.ROLE) as UserRole
+      navigate(getHomeRoute(storedRole), { replace: true })
     } catch (error) {
       handleApiError(error, true)
       message.error('Credenciales incorrectas')

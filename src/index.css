@@ -503,6 +503,16 @@ body {
   color: #16a34a;
 }
 
+.stat-card-icon-danger {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.stat-card-icon-purple {
+  background: #eef2ff;
+  color: #6366f1;
+}
+
 .stat-card .ant-statistic-title {
   color: var(--color-text-muted);
   font-size: 13px;
@@ -520,6 +530,53 @@ body {
 .stat-card-info .ant-statistic-content-value { color: #0d9488; }
 .stat-card-warning .ant-statistic-content-value { color: #d97706; }
 .stat-card-success .ant-statistic-content-value { color: #16a34a; }
+.stat-card-danger .ant-statistic-content-value { color: #ef4444; }
+.stat-card-purple .ant-statistic-content-value { color: #6366f1; }
+
+.dashboard-page .dashboard-alert-banner {
+  margin-bottom: 20px;
+  border-radius: var(--radius-md);
+}
+
+.dashboard-chart-card {
+  height: 100%;
+}
+
+.dashboard-chart-card .ant-card-head-title {
+  font-weight: 600;
+}
+
+.chart-subtitle {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.stock-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.stock-gauge-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -12px;
+}
+
+.stock-gauge-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.stock-gauge-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
 
 /* Transaction forms */
 .transaction-form {
@@ -694,6 +751,7 @@ body {
 .kardex-toolbar {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
   align-items: center;

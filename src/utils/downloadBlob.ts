@@ -2,8 +2,16 @@ function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
+export type ExportPrefix =
+  | 'ventas'
+  | 'compras'
+  | 'entradas_inventario'
+  | 'salidas_inventario'
+  | 'saldos_inventario'
+  | 'rotacion_productos'
+
 /** Ej: ventas_2026-06-08_14-30-45.xlsx */
-export function buildExportFilename(prefix: 'ventas' | 'compras'): string {
+export function buildExportFilename(prefix: ExportPrefix): string {
   const now = new Date()
   const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
   const time = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
